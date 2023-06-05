@@ -1,0 +1,27 @@
+{
+    "id": "A3B89709",
+    "path": "~/Dropbox/Projects/lbh_foraging_efficiency/scripts/lbh_foraging_efficiency.Rmd",
+    "project_path": "scripts/lbh_foraging_efficiency.Rmd",
+    "type": "r_markdown",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1685927546913.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "chunk_output_type": "console",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "25,59",
+        "scrollLine": "10"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1685928883,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1685928883074,
+    "read_only": false,
+    "read_only_alternatives": []
+}

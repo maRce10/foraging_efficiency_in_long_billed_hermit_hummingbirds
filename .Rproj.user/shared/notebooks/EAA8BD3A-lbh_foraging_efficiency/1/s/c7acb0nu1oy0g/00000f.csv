@@ -1,0 +1,5 @@
+"0","## data
+foraging_data <- ff <- read_excel(""./data/raw/ff.xlsx"")
+"
+"2","Erro: `path` does not exist: ‘./data/raw/ff.xlsx’
+"

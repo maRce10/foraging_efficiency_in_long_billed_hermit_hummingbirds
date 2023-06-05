@@ -1,0 +1,727 @@
+---
+title: "Personality_data analysis"
+author: "Kasia Wojczulanis-Jakubas"
+date: "30/05/2016"
+output: html_document
+---
+
+#------------------------------------------------------------
+#### Data frames   
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+library(Rcpp)
+library(gridExtra)
+library(ggplot2)
+
+
+```
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+
+setwd("D:/JA/Colibri/video cuts 2015/Pers.Video cuts 2015") 
+persIDc <- read.csv (file = "persIDc.csv", header = T, sep = ",") # df with the pers vars, birds Id; cleaned up
+
+persIDcs <- persIDc[, c(18, 15, 16, 19:22, 7:11, 13, 14, 23)] # df with selected columns
+persIDcs$ID.. <- as.factor(persIDcs$ID..)
+
+
+library(reshape)
+melt_persIDcs <- melt(persIDcs, id=c("treat", "Configuration", "ID..")) 
+melt_persIDcs_c <- melt_persIDcs[melt_persIDcs$treat == "Ctr" , ] 
+melt_persIDcs_e <- melt_persIDcs[melt_persIDcs$treat == "Exp" , ] 
+
+
+library(plyr)
+
+persIDcs_m <- ddply(persIDcs, c("treat", "ID.."), summarise,
+               mean_durins    = mean(mean_durins),
+               tot_durins    = mean(tot_durins),
+               mean_durouts    = mean(mean_durouts),
+               tot_durouts    = mean(tot_durouts),
+               tot_durfor    = mean(tot_durfor),
+               mov_spead = mean(mov_spead),
+               mov_feroc = mean(mov_feroc),
+               stan_nflo = mean(stan_nflo),
+               stan_nflochang = mean(stan_nflochang),
+               stan_nouts = mean(stan_nouts),
+               stan_nins = mean(stan_nins),
+               stand_totdist = mean(stand_totdist)
+)
+
+melt_persIDcs_mc <- persIDcs_m[persIDcs_m$treat == "Ctr" , ] 
+melt_persIDcs_me <- persIDcs_m[persIDcs_m$treat == "Exp" , ] 
+
+```
+
+persIDc # df with the pers vars, birds Id; cleaned up  
+persIDcs # df with selected columns    
+melt_persIDcs_c # melted df (by var), control    
+melt_persIDcs_e # melted df (by var), experiment    
+persIDcs_m # df with means ("treat", "ID..")     
+melt_persIDcs_mc # melted means df (by var), control     
+melt_persIDcs_me # melted means df (by var), experiment        
+
+
+#------------------------------------------------------------
+
+## Exploring pers variables   
+
+
+#### Density plots for all pers variables - **CONTROL**    
+
+```{r, fig.width=2.5, fig.height=2.5, message=FALSE, warning=FALSE}
+
+library(ggplot2)
+
+
+AllVard <- unique(melt_persIDcs_c$variable)
+for (i in 1:length(AllVard))
+{
+  Var.i <- AllVard[i]
+  dfs.i <- melt_persIDcs_c[melt_persIDcs_c$variable == Var.i, ]
+  print(ggplot(data = dfs.i, aes(x = value)) + geom_density(aes(x = value), fill = "grey") + ggtitle(paste(Var.i, "_CTR",sep = "")) + theme(legend.position="none")) 
+          
+}
+
+```  
+  
+  
+#### Density plots for all pers variables - **EXPERIMENT**       
+  
+  
+```{r, fig.width=2.5, fig.height=2.5, message=FALSE, warning=FALSE}
+
+library(ggplot2)
+
+AllVard1 <- unique(melt_persIDcs_e$variable)
+for (i in 1:length(AllVard1))
+{
+  Var.i <- AllVard1[i]
+  dfs.i <- melt_persIDcs_e[melt_persIDcs_e$variable == Var.i, ]
+  print(ggplot(data = dfs.i, aes(x = value)) + geom_density(aes(x = value), fill = "grey") +
+          ggtitle(paste(Var.i, "_EXP",sep = "")) + theme(legend.position="none")) 
+          
+  }
+
+```
+
+
+
+#### **Ctr vs exp** distributions of the pers variables - KS test      
+
+
+
+```{r, results="hide", message=FALSE, warning=FALSE}
+
+AllVard2c <- unique(melt_persIDcs_c$variable)
+AllVard2e <- unique(melt_persIDcs_e$variable)
+
+for (i in 1:length(AllVard2c))
+{
+  Varc.i <- AllVard2c[i]
+  Vare.i <- AllVard2e[i]
+  
+  dfsc.i <- melt_persIDcs_c[melt_persIDcs_c$variable == Varc.i, ]
+  dfse.i <- melt_persIDcs_e[melt_persIDcs_e$variable == Vare.i, ]
+  print(Varc.i)
+  print(ks.test(dfsc.i$value,   dfse.i$value, alternative = "two.sided"))  
+  }
+
+```
+
+=> Concl ks.test: signif diff in mean_durouts, and mov_feroc    
+
+
+
+#### Individual distribution by pers_var **CONTROL**         
+
+
+ 
+``` {r, fig.width=2.5, fig.height=2.5, message=FALSE, warning=FALSE}
+
+AllVar3 <- unique(melt_persIDcs_c$variable)
+for (i in 1:length(AllVar3))
+{
+  Var.i <- AllVar3[i]
+  dfs.i <- melt_persIDcs_c[melt_persIDcs_c$variable == Var.i, ]
+#   YourFileName <- paste(Var.i, ".jpg", sep = "")
+#   jpeg(file = YourFileName)
+  print(ggplot(data = dfs.i, aes(x = ID.., y = value)) + geom_boxplot() + geom_point() + ggtitle(paste(Var.i, "_CTR", sep = "")) + theme(legend.position="none"))
+  
+}
+
+```
+
+
+
+
+#### Individual distribution by pers_var **EXPERIMENT**        
+  
+  
+  
+``` {r, fig.width=2.5, fig.height=2.5, message=FALSE, warning=FALSE}
+
+AllVar4 <- unique(melt_persIDcs_e$variable)
+for (i in 1:length(AllVar4))
+{
+  Var.i <- AllVar4[i]
+  dfs.i <- melt_persIDcs_e[melt_persIDcs_e$variable == Var.i, ]
+  print(ggplot(data = dfs.i, aes(x = ID.., y = value)) + geom_boxplot() + geom_point() + ggtitle(paste(Var.i, "_EXP", sep = "")) + theme(legend.position="none"))
+  
+}
+
+```
+
+
+
+------------
+
+
+#### Per individual, all pers_vars **CONTROL**   
+
+
+``` {r, fig.width=3, fig.height=3, message=FALSE, warning=FALSE}
+
+ssize_c <- table(melt_persIDcs_c$ID..)/12 # sample size for each ind
+ssize_c <-ssize_c [! ssize_c %in% 0] # to get rid of inds with n = 0
+
+melt_persIDcs_co <- melt_persIDcs_c[order(melt_persIDcs_c$ID..),]
+
+
+AllVar5 <- unique(melt_persIDcs_co$ID..)
+for (i in 1:length(AllVar5))
+{
+  Id.i <-  ssize_c[i]
+  Var.i <- AllVar5[i]
+  dfs.i <- melt_persIDcs_co[melt_persIDcs_co$ID.. == Var.i, ]
+  print(ggplot(data = dfs.i, aes(x = variable, y = value)) + geom_point() + geom_boxplot() + coord_flip() + ggtitle(paste(Var.i, "_CTR", "_N=", ssize_c [i], sep = "")) + theme(legend.position="none"))
+  
+}
+
+```
+
+
+
+#### Per individual, all pers_vars **EXPERIMENT**     
+
+
+``` {r, fig.width=3, fig.height=3, message=FALSE, warning=FALSE}
+
+ssize_e <- table(melt_persIDcs_e$ID..)/12 # sample size for each ind
+ssize_e <-ssize_e [! ssize_e %in% 0] # to get rid of ind with n = 0
+
+melt_persIDcs_eo <- melt_persIDcs_e[order(melt_persIDcs_e$ID..),]
+
+AllVar6 <- unique(melt_persIDcs_eo$ID..)
+for (i in 1:length(AllVar6))
+{
+  Id.i <-  ssize_e[i]
+  Var.i <- AllVar6[i]
+  dfs.i <- melt_persIDcs_eo[melt_persIDcs_eo$ID.. == Var.i, ]
+  print(ggplot(data = dfs.i, aes(x = variable, y = value)) + geom_point() + geom_boxplot() + coord_flip() + ggtitle(paste(Var.i, "_EXP", "_N=", ssize_e [i], sep = "")) + theme(legend.position="none"))
+  
+}
+
+```
+
+
+#### Testing for interindividual differences **CONTROL** (only, unsuff n ind tested in exp)  
+
+
+```{r, echo = TRUE, results="hide"}
+
+# Inds with n = 1 excluded:
+table(melt_persIDcs_c$ID..)/12 # sample size for each ind
+melt_persIDcs_cs. <- melt_persIDcs_c[melt_persIDcs_c$ID.. != "241",]
+melt_persIDcs_cs <- melt_persIDcs_cs.[melt_persIDcs_cs.$ID.. != "365",] # selected df with ind of n > 1
+
+AllVard7 <- unique(melt_persIDcs_cs$variable)
+
+for (i in 1:length(AllVard7))
+{
+  Var.i <- AllVard7[i]
+  dfs.i <- melt_persIDcs_cs[melt_persIDcs_cs$variable == Var.i, ]
+  res.i <- lm(value ~ ID.., data = dfs.i)
+  print("######################################################################")
+  print(Var.i)
+  print(summary(res.i))
+  print(anova(res.i))
+}
+
+
+```
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+
+library(knitr)
+
+Var <- c("stan_nflo", "stan_nflochang", "stan_nouts", "stan_nins", "mean_durins", "tot_durins", "mean_durouts", "tot_durouts", "tot_durfor", "mov_spead", "mov_feroc", "stand_totdist")
+
+Nind <-   c(1, 1, 2, 2, 0, 3, 2, 2, 4, 0, 0, 0)
+
+Radj <- round(c(0.2316, 0.09081, 0.1859, 0.2754, 0.1101, 0.2557, 0.4368 ,0.3761, 0.3761, -0.06385,0.07824,-0.04119),2)
+ 
+Pval <- round(c(0.0007999, 0.0677, 0.004046, 0.0001436, 0.04065, 0.0003175, 5.62e-08, 1.464e-06, 1.464e-06, 0.8923, 0.09258, 0.752), 3)
+ 
+resdf1 <- as.data.frame(cbind(Nind, Radj, Pval))
+resdf1$Var <- Var
+resdf1 <-resdf1[,c(4,1:3)]
+resdf1 <- resdf1[order(-resdf1$Nind),]
+
+kable(resdf1, format = "html")
+
+```
+*Var - pers ariable; Nind - n individuals distinctly different (p < .05); Radj - R-adjsted of  the model; Pval - p-value of the model*    
+
+
+####Relationships between the pers_var **CONTROL** (only ctr, unsuff n ind tested in exp)    
+
+
+```{r, fig.width=12, fig.height=12}
+
+panel.cor <- function(x, y, digits=2, prefix="", cex.cor, ...)
+{
+    usr <- par("usr"); on.exit(par(usr))
+    par(usr = c(0, 1, 0, 1))
+    r <- cor(x, y)
+    txt <- format(c(r, 0.123456789), digits=digits)[1]
+    txt <- paste(prefix, txt, sep="")
+    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+pairs(persIDcs_m[persIDcs_m$treat == "Ctr",3:14], lower.panel=panel.smooth, upper.panel = panel.cor, pch = 20)
+
+
+```
+
+
+##### Relationships between the pers_var **CONTROL, only vars with >2 n ind distinct in the ANOVA**
+
+
+```{r, echo=FALSE, results="hide", fig.width=12, fig.height=12}
+
+panel.cor <- function(x, y, digits=2, prefix="", cex.cor, ...)
+ {
+    usr <- par("usr"); on.exit(par(usr))
+    par(usr = c(0, 1, 0, 1))
+    r <- cor(x, y)
+    txt <- format(c(r, 0.123456789), digits=digits)[1]
+    txt <- paste(prefix, txt, sep="")
+    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+pairs(persIDcs_m[persIDcs_m$treat == "Ctr",c(4:7,12,13)], lower.panel=panel.smooth, upper.panel = panel.cor, pch = 20)
+
+```
+
+
+#### Clustering individuals - **CONTROL** - all pers_var - testing various distance and clustering methods
+
+
+```{r, echo=TRUE, results="hide", fig.show="hide", message=FALSE, warning=FALSE}
+
+library(pvclust)
+
+persIDcs_mst <- t(persIDcs_m[persIDcs_m == "Ctr" , 3:14])
+colnames(persIDcs_mst) <- unique(persIDcs_m[persIDcs_m == "Ctr" ,]$ID..)
+persIDcs_mst_sc <- scale(persIDcs_mst)
+
+methd <- c(rep("correlation", 5), rep("euclidean", 5), rep("manhattan", 5))
+methcl <- c(rep(c("average", "ward.D", "ward.D2", "complete", "centroid"),3))
+
+for (i in 1:length(methcl)) {
+  methd.i <- methd [i]
+  methcl.i <- methcl [i]
+  fit.i <- pvclust(persIDcs_mst_sc, method.hclust=methcl[i],
+               method.dist=methd[i], nboot = 1000, iseed = 20)
+  print(plot(fit.i, main = "", hang = -1))
+  print(pvrect(fit.i, alpha=.95))
+}
+
+
+
+
+
+
+```
+
+#### Cophenetic correlations - to find the best method of dist and clust        
+
+Distance matrices tested (order):: "correlation", "Euclidean", "Manhattan"          
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(proxy)
+
+persIDcs_ms <- persIDcs_m[persIDcs_m == "Ctr" , 3:14]
+colnames(persIDcs_ms) <- unique(persIDcs_m[persIDcs_m == "Ctr" ,]$ID..)
+persIDcs_ms_sc <- scale(persIDcs_ms)
+
+dist_cor <- proxy::dist(persIDcs_ms_sc, method = "correlation")
+dist_eu <- proxy::dist(persIDcs_ms_sc, method = "Euclidean")
+dist_mh <- proxy::dist(persIDcs_ms_sc, method ="Manhattan")
+
+
+distmax <- rep(list (dist_cor, dist_eu, dist_mh),5)
+cl_meth <- c(rep("average",3), rep("ward.D", 3), rep("ward.D2", 3), rep("complete", 3), rep("centroid", 3))
+
+for (i in 1:length(distmax)) {
+  hcl.i <- hclust(distmax[[i]], method = cl_meth[i])
+  cop.i <- cophenetic(hcl.i)
+  cor.i <- cor(distmax[[i]], cop.i)
+  print(paste(cl_meth[i], " = ", cor.i, sep = ""))
+}
+
+```
+
+###### Comp of the two trees with the best cophenetic correlations     
+->  dist: "Euclidean"; clust: "average" and "centroid"
+
+```{r, echo=FALSE, results="hide", fig.width=5, fig.height=5, message=FALSE, warning=FALSE}
+
+library(pvclust)
+
+persIDcs_mst <- t(persIDcs_m[persIDcs_m == "Ctr" , 3:14]) # data transposed - important for pvclust
+colnames(persIDcs_mst) <- unique(persIDcs_m[persIDcs_m == "Ctr" ,]$ID..)
+persIDcs_mst_sc <- scale(persIDcs_mst)
+
+clust.av <- pvclust(persIDcs_mst_sc, method.hclust="average",
+               method.dist="euclidean", nboot = 1000, iseed = 20)
+
+plot(clust.av, hang = -1, main = "", ylab = "")
+pvrect(clust.av, alpha = .95)
+
+
+
+clust.com <- pvclust(persIDcs_mst_sc, method.hclust="complete",
+               method.dist="euclidean", nboot = 1000, iseed = 20)
+
+plot(clust.com, hang = -1, main = "", ylab = "")
+pvrect(clust.com, alpha = .95)
+
+```
+
+
+### Testing cohenetic for the two above
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+library(proxy)
+persIDcs_ms <- persIDcs_m[persIDcs_m == "Ctr" , 3:14]
+colnames(persIDcs_ms) <- unique(persIDcs_m[persIDcs_m == "Ctr" ,]$ID..)
+persIDcs_ms_sc <- scale(persIDcs_ms)
+
+dist_eu <- proxy::dist(persIDcs_ms_sc, method = "Euclidean")
+
+set.seed(23235)
+
+hc.av <- hclust(dist_eu, "average")
+hc.com <- hclust(dist_eu, "complete")
+
+cor(cophenetic(hc.av), cophenetic(hc.com))
+
+
+```
+
+
+### PCA
+
+``` {r, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(FactoMineR)
+library(factoextra)
+
+# CONTROL
+# data and PCA
+df.pca<-persIDcs[persIDcs$treat == "Ctr",4:15]
+df.pcaID <-persIDcs[persIDcs$treat == "Ctr",1]
+df.pcatreat <-persIDcs[persIDcs$treat == "Ctr",2]
+
+res.pca <- PCA(df.pca, graph = F)
+
+# Eigenvalues and scree plot
+eigv <- res.pca$eig
+fviz_screeplot(res.pca)
+
+# Correlations of variables with pc1 and pc2
+fviz_pca_var(res.pca, axes = c(1,2), col.var = "cos2") +
+scale_color_gradient2(low = "white", mid = "grey", high = "black", midpoint = 0.5) + theme_minimal()
+
+
+# Contributions of particular variables into two first PCs 
+fviz_pca_contrib(res.pca, choise = "var", axes = 1:2)
+
+
+# EXPERIMENT
+# data and PCA
+df.pca.e<-persIDcs[persIDcs$treat == "Exp",4:15]
+df.pcaID.e <-persIDcs[persIDcs$treat == "Exp",1]
+df.pcatreat.e <-persIDcs[persIDcs$treat == "Exp",2]
+
+res.pca.e <- PCA(df.pca.e, graph = F)
+
+# Eigenvalues and scree plot
+eigv.e <- res.pca.e$eig
+fviz_screeplot(res.pca.e)
+
+# Correlations of variables with pc1 and pc2
+fviz_pca_var(res.pca.e, axes = c(1,2), col.var = "cos2") +
+scale_color_gradient2(low = "white", mid = "grey", high = "black", midpoint = 0.5) + theme_minimal()
+
+
+# Contributions of particular variables into two first PCs 
+fviz_pca_contrib(res.pca.e, choise = "var", axes = 1:2)
+
+
+```
+
+
+``` {r, echo=FALSE, results="hide", message=FALSE, warning=FALSE}
+
+# Getting the PC scores for the individual observations - CONTROL
+df.pca$pc1<-res.pca$ind$coord[,1] # to get the pc1 and pc2 scores!!!!
+df.pca$pc2<-res.pca$ind$coord[,2] # to get the pc1 and pc2 scores!!!!
+df.pca$pc3<-res.pca$ind$coord[,3] # to get the pc1 and pc2 scores!!!!
+df.pca$pc4<-res.pca$ind$coord[,4] # to get the pc1 and pc2 scores!!!!
+df.pca$pc5<-res.pca$ind$coord[,5] # to get the pc1 and pc2 scores!!!!
+df.pca$ID..<- df.pcaID
+df.pca$treat<- df.pcatreat
+
+
+# Getting the PC scores for the individual observations - EXP
+df.pca.e$pc1<-res.pca.e$ind$coord[,1] # to get the pc1 and pc2 scores!!!!
+df.pca.e$pc2<-res.pca.e$ind$coord[,2] # to get the pc1 and pc2 scores!!!!
+df.pca.e$pc3<-res.pca.e$ind$coord[,3] # to get the pc1 and pc2 scores!!!!
+df.pca.e$pc4<-res.pca.e$ind$coord[,4] # to get the pc1 and pc2 scores!!!!
+df.pca.e$pc5<-res.pca.e$ind$coord[,5] # to get the pc1 and pc2 scores!!!!
+df.pca.e$ID.. <-df.pcaID.e
+df.pca.e$treat <- df.pcatreat.e
+
+```
+
+
+#### PCA on selected variables
+
+``` {r, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(FactoMineR)
+library(factoextra)
+
+# CONTROL
+# data and PCA
+names(persIDcs)
+df.pca<-persIDcs[persIDcs$treat == "Ctr",6:15]
+df.pcaID <-persIDcs[persIDcs$treat == "Ctr",1]
+df.pcatreat <-persIDcs[persIDcs$treat == "Ctr",2]
+
+res.pca <- PCA(df.pca, graph = F)
+
+# Eigenvalues and scree plot
+eigv <- res.pca$eig
+fviz_screeplot(res.pca)
+
+# Correlations of variables with pc1 and pc2
+fviz_pca_var(res.pca, axes = c(1,2), col.var = "cos2") +
+scale_color_gradient2(low = "white", mid = "grey", high = "black", midpoint = 0.5) + theme_minimal()
+
+
+# Contributions of particular variables into two first PCs 
+fviz_pca_contrib(res.pca, choise = "var", axes = 1:2)
+
+
+# EXPERIMENT
+# data and PCA
+df.pca.e<-persIDcs[persIDcs$treat == "Exp",6:15]
+df.pcaID.e <-persIDcs[persIDcs$treat == "Exp",1]
+df.pcatreat.e <-persIDcs[persIDcs$treat == "Exp",2]
+
+res.pca.e <- PCA(df.pca.e, graph = F)
+
+# Eigenvalues and scree plot
+eigv.e <- res.pca.e$eig
+fviz_screeplot(res.pca.e)
+
+# Correlations of variables with pc1 and pc2
+fviz_pca_var(res.pca.e, axes = c(1,2), col.var = "cos2") +
+scale_color_gradient2(low = "white", mid = "grey", high = "black", midpoint = 0.5) + theme_minimal()
+
+
+# Contributions of particular variables into two first PCs 
+fviz_pca_contrib(res.pca.e, choise = "var", axes = 1:2)
+
+
+```
+
+
+``` {r, echo=FALSE, results="hide", message=FALSE, warning=FALSE}
+
+# Getting the PC scores for the individual observations - CONTROL
+df.pca$pc1<-res.pca$ind$coord[,1] # to get the pc1 and pc2 scores!!!!
+df.pca$pc2<-res.pca$ind$coord[,2] # to get the pc1 and pc2 scores!!!!
+df.pca$pc3<-res.pca$ind$coord[,3] # to get the pc1 and pc2 scores!!!!
+df.pca$pc4<-res.pca$ind$coord[,4] # to get the pc1 and pc2 scores!!!!
+df.pca$pc5<-res.pca$ind$coord[,5] # to get the pc1 and pc2 scores!!!!
+df.pca$ID..<- df.pcaID
+df.pca$treat<- df.pcatreat
+
+
+# Getting the PC scores for the individual observations - EXP
+df.pca.e$pc1<-res.pca.e$ind$coord[,1] # to get the pc1 and pc2 scores!!!!
+df.pca.e$pc2<-res.pca.e$ind$coord[,2] # to get the pc1 and pc2 scores!!!!
+df.pca.e$pc3<-res.pca.e$ind$coord[,3] # to get the pc1 and pc2 scores!!!!
+df.pca.e$pc4<-res.pca.e$ind$coord[,4] # to get the pc1 and pc2 scores!!!!
+df.pca.e$pc5<-res.pca.e$ind$coord[,5] # to get the pc1 and pc2 scores!!!!
+df.pca.e$ID.. <-df.pcaID.e
+df.pca.e$treat <- df.pcatreat.e
+
+```
+
+
+
+
+
+
+#### Reapeted ANOVA on PCs
+```{r,echo=FALSE, results="hide", message=FALSE, warning=FALSE }
+df.pca.both <- rbind(df.pca.e, df.pca) # df needed for rep ANOVA
+table(df.pca.both$treat, df.pca.both$ID..) # to check the matrix for the analysis
+
+df.pca.both_rep.. <-df.pca.both[df.pca.both$ID.. != "143", ]
+df.pca.both_rep. <-df.pca.both_rep..[df.pca.both_rep..$ID.. != "365", ]
+df.pca.both_rep <- droplevels(df.pca.both_rep.)
+
+table(df.pca.both_rep$treat, df.pca.both_rep$ID..) # to check the matrix for the analysis
+names(df.pca.both)
+library(plyr)
+
+df.rep <- ddply(df.pca.both_rep, c("treat", "ID.."), summarise,
+               pc1    = mean(pc1),
+               pc2    = mean(pc2),
+               pc3    = mean(pc3),
+               pc4    = mean(pc4),
+               pc5    = mean(pc5),
+               # stan_nflo     = mean(stan_nflo),
+               stan_nouts    = mean(stan_nouts),
+               stan_nins     = mean(stan_nins),
+               tot_durouts   = mean(tot_durouts),
+               tot_durins    = mean(tot_durins),
+               tot_durfor    = mean(tot_durfor),
+               mov_spead     = mean(mov_spead)
+)
+               
+               
+# PC1           
+aov.out = aov(pc1 ~ ID.. + Error(treat/ID..), data=df.rep); summary(aov.out)
+aov.out = aov(pc1 ~ treat + Error(ID../treat), data=df.rep); summary(aov.out)
+#Plot
+plotpc1<- ggplot(data = df.rep, aes(x = ID.., y = pc1, colour = treat)) + geom_point(colour = c(rep("gray33", 10), rep("steelblue2", 10)), size = c(rep(2, 10), rep(3, 10))) + ggtitle("PC1_undisturbed(gray)/experimental(blue)")    
+
+# PC2
+aov.out = aov(pc2 ~ treat + Error(ID../treat), data=df.rep); summary(aov.out)
+aov.out = aov(pc2 ~ ID.. + Error(treat/ID..), data=df.rep); summary(aov.out)
+#Plot
+plotpc2 <- ggplot(data = df.rep, aes(x = ID.., y = pc2, colour = treat)) + geom_point(colour = c(rep("gray33", 10), rep("steelblue2", 10)), size = c(rep(2, 10), rep(3, 10)))  + ggtitle("PC2_undisturbed(gray)/experimental(blue)")
+
+grid.arrange(plotpc1, plotpc2, ncol = 2)
+
+
+# Other variables
+
+# stan_nflo
+# aov.out = aov(stan_nflo ~ treat + Error(ID../treat), data=df.rep); summary(aov.out)
+# #Plot
+# ggplot(data = df.rep, aes(x = ID.., y = stan_nflo, colour = treat)) + geom_point() + ggtitle("means for tan_nflo")  
+# 
+# 
+# # stan_nouts
+# aov.out = aov(stan_nouts ~ treat + Error(ID../treat), data=df.rep); summary(aov.out)
+# #Plot
+# ggplot(data = df.rep, aes(x = ID.., y = stan_nouts, colour = treat)) + geom_point() + ggtitle("means for stan_nouts")  
+# 
+# # stan_nins
+# aov.out = aov(stan_nins ~ treat + Error(ID../treat), data=df.rep); summary(aov.out)
+# aov.out = aov(stan_nins ~ ID.. + Error(treat/ID..), data=df.rep); summary(aov.out)
+# #Plot
+# ggplot(data = df.rep, aes(x = ID.., y = stan_nins, colour = treat)) + geom_point() +
+#           ggtitle("means for PC2")  
+# 
+# 
+# # tot_durouts
+# aov.out = aov(tot_durouts ~ treat + Error(ID../treat), data=df.rep); summary(aov.out)
+# aov.out = aov(tot_durouts ~ ID.. + Error(treat/ID..), data=df.rep); summary(aov.out)
+# #Plot
+# ggplot(data = df.rep, aes(x = ID.., y = tot_durouts, colour = treat)) + geom_point() +
+#           ggtitle("means for PC2")  
+# 
+# 
+# # tot_durins
+# aov.out = aov(tot_durins ~ treat + Error(ID../treat), data=df.rep); summary(aov.out)
+# aov.out = aov(tot_durins ~ ID.. + Error(treat/ID..), data=df.rep); summary(aov.out)
+# #Plot
+# ggplot(data = df.rep, aes(x = ID.., y = tot_durins, colour = treat)) + geom_point() +
+#           ggtitle("means for PC2")  
+# 
+# 
+# # tot_durfor
+# aov.out = aov(tot_durfor ~ treat + Error(ID../treat), data=df.rep); summary(aov.out)
+# aov.out = aov(tot_durfor ~ ID.. + Error(treat/ID..), data=df.rep); summary(aov.out)
+# #Plot
+# ggplot(data = df.rep, aes(x = ID.., y = tot_durfor, colour = treat)) + geom_point() +
+#           ggtitle("means for PC2")  
+# 
+# 
+# # mov_spead
+# aov.out = aov(mov_spead ~ treat + Error(ID../treat), data=df.rep); summary(aov.out)
+# aov.out = aov(mov_spead ~ ID.. + Error(treat/ID..), data=df.rep); summary(aov.out)
+# #Plot
+# ggplot(data = df.rep, aes(x = ID.., y = mov_spead, colour = treat)) + geom_point() +
+#           ggtitle("means for PC2")  
+# 
+# 
+
+```
+
+Results: all tests, p-values > .05    
+
+
+#### Testing interindvidual differences with PC1 and PC2 **CONTROL only**
+(presented output for pc1 only)
+
+``` {r, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+# df.pca.both_rep # data frame
+df.pcdf_c <- df.pca.both_rep[df.pca.both_rep$treat == "Ctr",]
+df.pcdf_e <- df.pca.both_rep[df.pca.both_rep$treat == "Exp",]
+
+give.n <- function(x){
+   return(c(y = median(x)-.1, label = length(x)))
+}
+
+ggplot(data = df.pcdf_c, aes(x = ID.., y = pc1)) + geom_point() + geom_boxplot() + theme(legend.position="none") +
+stat_summary(fun.data = give.n, geom = "text") 
+ 
+
+ggplot(data = df.pcdf_e, aes(x = ID.., y = pc1)) + geom_point() + geom_boxplot() + theme(legend.position="none") +
+stat_summary(fun.data = give.n, geom = "text") 
+
+3
+
+res.pc1 <- lm(pc1 ~ ID.., data = df.pcdf_c)
+summary(res.pc1)
+anova(res.pc1)
+# 
+# res.pc2 <- lm(pc2 ~ ID.., data = df.pcdf_c)
+# summary(res.pc2)
+# anova(res.pc2)
+
+# res.pc1e <- lm(pc1 ~ ID.., data = df.pcdf_e)
+# summary(res.pc1e)
+# anova(res.pc1e)
+# 
+# res.pc2e <- lm(pc2 ~ ID.., data = df.pcdf_e)
+# summary(res.pc2e)
+# anova(res.pc2e)
+
+```

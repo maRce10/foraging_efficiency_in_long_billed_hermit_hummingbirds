@@ -1,0 +1,456 @@
+---
+title: "Hermit's personality - data preparation"
+author: "Kasia Wojczulanis-Jakubas"
+date: "16/05/2016"
+output: html_document
+---
+##----------------------------------------------------------------------------------------------------------------------
+#### Some auxillary functions
+
+*To create a temporary variable for subsequent calculations/subsetting*
+
+
+``` {r, echo = FALSE, message  = FALSE, warning=FALSE}
+
+
+shcut1    <- "numfd"
+fullname1 <- "numbers of feeders" 
+def1      <-  "recodes feeders and intervals (A, B, C, OUT -> 1, 2, 3, 0)"   
+
+shcut2    <- "seqfd"
+fullname2 <- "sequential numbers of feeders" 
+def2      <- "sequentially numbers feeders and intervals" 
+
+shcut3    <- "selou"
+fullname3 <- "selection of external OUTS"
+def3      <- "indicates records to delete (external OUTS)"
+
+shcut4    <- "subsdf"
+fullname4 <- "subsetting data frames"
+def4      <- "to subet valid records (no external OUTS)"
+
+Short_cut <- c(shcut1, shcut2, shcut3, shcut4)
+Full_name <- c(fullname1, fullname2,fullname3,fullname4)
+Definition <- c(def1, def2, def3, def4)
+
+auxfun <- as.data.frame(cbind(Short_cut, Full_name, Definition))
+
+library(ascii)
+tab1 <- ascii(auxfun)
+print (tab1)
+
+```
+
+```{r}
+
+numfd <- function (X1) {
+  for (i in 1:length(X1$Feeder)) {
+    if (X1$Feeder[i] == "A") {
+      X1$feeder[i] = 1
+    } else {
+      if (X1$Feeder[i] == "B") {
+        X1$feeder[i] = 2 
+      } else {
+        if (X1$Feeder[i] == "C") {
+          X1$feeder[i] = 3 
+        } else {
+          X1$feeder[i] = 0
+        }
+      }
+    }
+  }
+  result <- X1 
+  return(result)
+} 
+
+```
+
+```{r}
+
+seqfd <- function (Y1) {
+  Y1$seqFeeder <- rep(x = seq_along(rle(Y1$feeder)$lengths), times = rle(Y1$feeder)$lengths)
+  return(Y1)
+} 
+
+```
+
+```{r}
+
+selout <- function (Z1) {
+  lastrow <-length(rle(Z1$feeder)$lengths) 
+  Z1$sel <-  ifelse (Z1$seqFeeder == lastrow & Z1$Feeder == "OUT" | Z1$seqFeeder == 1 & Z1$Feeder == "OUT",
+                           "to delete", "OK")
+  return(Z1)
+} 
+
+```
+
+```{r}
+subsdf<- function (S1) {
+  S1 <-S1[S1$sel == "OK", ]
+}
+
+```
+
+
+#### Loading and processing all data frames with auxillary functions
+
+
+```{r}
+
+library(plyr)
+setwd("D:/JA/Colibri/Personality tests 2015/Pers.Video cuts 2015/csv tracker files")
+
+
+dataframes <- list.files(path=getwd())  
+list_dataframes <- llply(dataframes, read.csv, header = T, sep = ";", dec = ",") # list of all data frames
+
+list_dataframes <- llply(list_dataframes, numfd)
+list_dataframes <- llply(list_dataframes, seqfd)
+list_dataframes <- llply(list_dataframes, selout)
+list_dataframes <- llply(list_dataframes, subsdf)
+
+```
+
+
+#------------------------------------------------------------
+# Personality variables
+
+
+**Number of feeders used**
+
+*Absolute number of feeders = number of different letters; e.g A:B, B:A, A:B = 2; OUT's need to be excluded.*
+
+*A proxy for explorative trait.*
+*The HIGER value, the MORE explorative individual.*
+
+
+```{r}
+
+nflo <- function (C1) {
+  if (any(C1$Feeder == "OUT")){
+    abs_nflo<- length(unique(C1$Feeder)) - 1
+  } else {abs_nflo<- length(unique(C1$Feeder))}
+}
+
+pers1 <- ldply(list_dataframes, nflo)
+
+```
+
+
+
+**Number of feeders' changes**
+
+*eg. A:B, B:A, A:B =  3; internal OUTS are redundant at this stage - requires a temporary dataset.*
+
+*A proxy for explorative trait, may be stronger/better than abolute number of feeders.*
+*The HIGHER value, the MORE explorative individual.*
+
+
+```{r}
+
+subsdf2<- function (F1) { # function to subset
+  F1 <-F1[F1$Feeder != "OUT", ] 
+}
+
+
+list_dataframes1 <- llply(list_dataframes, subsdf2) # subsetting
+
+
+nchang <- function (H1){ # function to calculate the number of changes
+  nflo_chang <- length(rle(as.numeric(H1$Feeder))$values)-1 
+}
+
+
+pers2 <- ldply(list_dataframes1, nchang)
+
+```
+
+
+
+**Number of intra-feeding intervals**
+
+*Number of ‘OUTS’ in between; e.g. A-OUT-B-OUT-C = 2.*
+
+*A proxy for risk-avoidance trait, partly also for general arousal.*
+*The HIGHER value, the MORE risk-avoiding individual, with higher arousal.*
+
+
+```{r}
+
+nout<- function (G1) {
+  nouts<-length(which(rle(G1$feeder)$values == 0))
+  return(nouts)
+}
+
+pers3 <- ldply(list_dataframes, nout)
+
+```
+
+
+
+**Number of feeding intervals**
+
+*Number of ‘INS’ (all feeders, i.e. A, B, B).*
+
+*A proxy for risk-avoidance trait, partly also for general arousal; kind of "reverse"" of the number of inter-feeding intervals.* 
+*The HIGHER value, the MORE risk-avoiding individual, with higher arousal.*
+
+```{r}
+
+pers4 <- as.data.frame(pers3$V1+1)
+
+```
+
+
+
+**Feeding duration - mean and total feeding duration (in seconds)**
+
+*Mean: a simple mean duration of 'INS' intervals. Total: sum of all ‘INS’ durations;  e.g.  A+B+C.* 
+*Single frame duration - 0.33 sec; requires temp data set: list_dataframes1 - no internal 'OUTS'.*
+
+*A proxy for risk-avoidance trait, partly also for general arousal; kind of "reverse"" of the number of inter-feeding intervals.* 
+*the HIGHER value, the LESS risk-avoiding individual, with LOWER arousal.*
+
+
+```{r}
+
+require(stats)
+
+dins <- function (T1){
+  tapply(T1$Feeder, T1$seqFeeder, length) # need to be run on df without internal 'OUTS'
+}
+
+tempdf1 <- llply(list_dataframes1, dins)  
+pers5 <- ldply(tempdf1, mean)
+pers5$V1 <-  pers5$V1*0.033
+
+
+pers6 <- ldply(tempdf1, sum)
+pers6$V1 <-  pers6$V1*0.033
+
+
+```
+
+
+
+**Duration of interfeeding intervals  - mean and total  (in seconds)**
+
+*Mean: a simple mean duration of 'OUTS' intervals. Total: sum of all ‘OUTS' in between;  e.g.  A-from OUT1-B-OUT 2-C ->  OUT1+OUT2.*
+*Single frame duration - 0.33 sec; requires temp data set - only 'OUTS' records.*
+
+*A proxy for risk-avoidance trait, partly also for general arousal; kind of "reverse"" of the number of inter-feeding intervals.* 
+*The HIGHER value, the MORE risk-avoiding individual, with HIGHER arousal.*
+
+
+```{r}
+
+subsdf3<- function (J1) { # function to subset
+  J1 <-J1[J1$Feeder == "OUT", ] 
+}
+
+list_dataframes2 <- llply(list_dataframes, subsdf3) # subsetting
+
+require(stats)
+
+douts <- function (U1){
+  tapply(U1$Feeder, U1$seqFeeder, length)
+}
+
+tempdf2 <- llply(list_dataframes2, douts)
+pers7 <- ldply(tempdf2, mean) # applying the function to the proper data set, calcualting the mean
+
+pers7[is.na(pers7)] <- 0 # NA values need to be replaced with 0
+pers7$V1 <-  pers7$V1*0.033 
+
+pers7a <- ldply(tempdf2, sum) # calculating the total
+pers7a$V1 <- pers7a$V1*0.033
+
+```
+
+
+
+**Calculation of duration of foraging**
+
+*Sum of duration of all 'INS' and 'OUTS'.*
+* More like an outcome of the personality, to be used in further analyses.*
+
+
+```{r}
+
+pers8 <- as.data.frame(pers6$V1+ pers7a$V1)
+
+```
+
+
+
+**Space usage - total distance, 'speed' and ferocity**
+
+*A proxies for general arousal; Three components - a) total distance covered during the foraging, b) 'speed' (rather distance standardized by total foraging time), and c) ferocity (coeficient variance of deviations from the feeders)*
+*The HIGHER values, the  HIGHER general arousal.*
+
+
+```{r}
+
+spcals<-function(X){ # total distance
+  di<-NULL
+  for(i in 2:nrow(X))
+  {lx<-X$x[i]-X$x[i-1]
+  ly<-X$y[i]-X$y[i-1]  
+  di[i-1]<-sqrt(lx^2+ly^2)
+  }
+  return(sum(di))
+}
+
+
+spcalmean<-function(X){ # mean spead (frame = row = 0.033 sec)
+  di<-NULL
+  for(i in 2:nrow(X))
+  {lx<-X$x[i]-X$x[i-1]
+  ly<-X$y[i]-X$y[i-1]  
+  di[i-1]<-sqrt(lx^2+ly^2)
+  }
+  return(mean(di)/(nrow(X)*0.033))
+}
+
+# An auxillary function to calculate coeficent of variance
+CV <- function(z){
+  sd(z)/mean(z)
+}
+
+spcalcv<-function(X){ # express ferocity
+  di<-NULL
+  for(i in 2:nrow(X))
+  {lx<-X$x[i]-X$x[i-1]
+  ly<-X$y[i]-X$y[i-1]  
+  di[i-1]<-sqrt(lx^2+ly^2)
+  }
+  return(CV(di))
+}
+
+
+pers9a <- ldply(list_dataframes, spcals)
+pers9b <- ldply(list_dataframes, spcalmean)
+pers9c <- ldply(list_dataframes, spcalcv)
+
+```
+
+
+#------------------------------------------------------------
+## Personality variables - data frame
+
+*Putting all variables into a single data frame, to be merged with birds IDs*
+
+
+```{r}
+
+pers <-cbind(pers1, pers2, pers3, pers4, pers5, pers6, pers7, pers7a, pers8, pers9a, pers9b, pers9c)
+colnames(pers) <- c("abs_nflo", "nflo_chang", "nouts", "nins", "mean_durins", "tot_durins", "mean_durouts", 
+                    "tot_durouts","tot_durfor", "mov_totdist",  "mov_spead", "mov_feroc") 
+
+
+pers$Video.cut <- dataframes
+pers$treat<-substr(pers$Video.cut, 38, 40)
+
+```
+
+#------------------------------------------------------------
+#### Birds ID 
+
+```{r}
+setwd("D:/JA/Colibri/video cuts 2015/Pers.Video cuts 2015") 
+birdsID <- read.csv (file = "detailed data.csv", header = T, sep = ";") # detailed data - df with the birds Id
+```
+  
+  
+``` {r, echo = FALSE, eval = FALSE}
+
+# Exploring data set
+names(birdsID)
+str(birdsID)
+sum(is.na(birdsID$ID..)) # to check if all birds ID are provided
+sum(is.na(birdsID$Video.cut)) # to check if all video ID are provided
+
+# To merge the two data frame
+# Adjusting Video cuts names
+
+# Check for n characters
+# 
+# length(pers$Video.cut)
+# class(pers$Video.cut)
+
+# pers$Video.cut # for pers data frame
+# for (p in 1:119) {
+#   nID <- nchar(pers$Video.cut)
+# }
+# nID
+# 
+# 
+# length(birdsID$Video.cut)
+# class(birdsID$Video.cut)
+# 
+# for (f in 1:151) {  # for birds Id data frame
+#   nId <- nchar(as.character(birdsID$Video.cut))
+# }
+# nId
+
+```
+
+#### Merging personality variables data frame (pers) with birds ID
+
+```{r}
+
+Idtemp1 <- as.character(birdsID$Video.cut) #Adjusting Video.cut in birdsID data frame
+Idtemp2 <- paste(Idtemp1, ".csv", sep = "")
+birdsID$Video.cut <-Idtemp2         
+
+
+# merging the two data frames
+persID <- merge(pers, birdsID, by.x = "Video.cut", all.x = TRUE)
+
+```
+
+
+``` {r, echo = FALSE, eval = FALSE}
+
+# Inspection of the merged data frames
+View(persID)
+head(persID)
+length(persID$Video.cut)
+names(persID)
+sum(!complete.cases(persID))  # counts number of missing values
+which(!complete.cases(persID))  # counts number of missing values
+
+```
+
+#### Cleanig up data 
+
+```{r}
+
+doubts <- which(!persID$Comments == "")
+bedrecc <- doubts[c(1:3, 11,12)] # list of records that behaviour could be changed by an external factores (bee/bird)
+
+persIDc <- persID[-bedrecc,-c(15:18, 20:22, 25:28)] # data frame without suspicious records, and redudunt columns
+persIDc$ID.. <- as.factor(persIDc$ID..)
+```
+
+
+#### Personality variables transformation/standarization 
+
+```{r}
+
+persIDc$stan_nflo      <- persIDc$abs_nflo/persIDc$tot_durfor 
+persIDc$stan_nflochang <- persIDc$nflo_chang/persIDc$tot_durfor
+persIDc$stan_nouts     <- persIDc$nouts/persIDc$tot_durfor
+persIDc$stan_nins      <- persIDc$nins/persIDc$tot_durfor
+persIDc$stand_totdist  <- persIDc$mov_totdist/(persIDc$nflo_chang+1)/(persIDc$nouts+1) 
+
+```
+
+
+
+```{r}
+
+write.csv(persIDc, file = "persIDc.csv") # personality data frame with birds ID, cleaned-up, ready-to-use 
+
+```

@@ -1,0 +1,52 @@
+time,code,class
+4.275,appears,1
+4.375,first suspens,2
+5.3,feeds_start,3
+6.8, feeds_end,3
+7.725,feeds_start,3
+9.3, feeds_end,3
+9.875,feeds_start,3
+10.15, feeds_end,3
+10.8,feeds_start,3
+11.925, feeds_end,3
+12.525,feeds_start,3
+13.375, feeds_end,3
+15.225, feeds_end,3
+15.875,feeds_start,3
+16.625, feeds_end,3
+17.775,feeds_start,3
+18.475, feeds_end,3
+19,feeds_start,3
+19.85, feeds_end,3
+20.5,feeds_start,3
+21.175, feeds_end,3
+21.825,feeds_start,3
+22.925, feeds_end,3
+23.6,feeds_start,3
+24.55, feeds_end,3
+26.6,feeds_start,3
+27.5, feeds_end,3
+28.225,feeds_start,3
+29.225, feeds_end,3
+30.75,feeds_start,3
+31.675, feeds_end,3
+32.8,feeds_start,3
+34.15, feeds_end,3
+36.075,feeds_start,3
+37, feeds_end,3
+37.725,feeds_start,3
+38.8, feeds_end,3
+39.35,feeds_start,3
+40.45, feeds_end,3
+41.375,feeds_start,3
+42.45, feeds_end,3
+44.1,feeds_start,3
+45.125, feeds_end,3
+46.525,feeds_start,3
+47.5, feeds_end,3
+48.425,feeds_start,3
+49, feeds_end,3
+49.425,feeds_start,3
+50.25, feeds_end,3
+50.45, disappears,1
+50.625,END,0

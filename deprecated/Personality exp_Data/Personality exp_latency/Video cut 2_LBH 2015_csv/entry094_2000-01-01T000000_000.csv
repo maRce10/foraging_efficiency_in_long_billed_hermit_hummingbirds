@@ -1,0 +1,33 @@
+time,code,class
+1.075,appears,1
+1.075,first suspens,2
+1.7,feeds_start,3
+2.275, feeds_end,3
+3.225,feeds_start,3
+4.375, feeds_end,3
+4.75,feeds_start,3
+5.475, feeds_end,3
+6.075,feeds_start,3
+7.125, feeds_end,3
+7.575,feeds_start,3
+9.3, feeds_end,3
+9.75,feeds_start,3
+11.075, feeds_end,3
+11.675,feeds_start,3
+13.95, feeds_end,3
+14.525,feeds_start,3
+15.65, feeds_end,3
+16.2,feeds_start,3
+18.25, feeds_end,3
+18.775,feeds_start,3
+20.3, feeds_end,3
+21.125,feeds_start,3
+23.375, feeds_end,3
+23.825,feeds_start,3
+24.8, feeds_end,3
+25.45,feeds_start,3
+26.825, feeds_end,3
+27.675,feeds_start,3
+30.05, feeds_end,3
+30.675, disappears,1
+30.9,END,0

@@ -1,0 +1,15 @@
+time,code,class
+0.6,appears,1
+0.75,first suspens,2
+3.6,feeds_start,3
+3.875, feeds_end,3
+5.35,feeds_start,3
+5.925, feeds_end,3
+10.875,feeds_start,3
+11.5, feeds_end,3
+11.975,feeds_start,3
+16.4, feeds_end,3
+17.15,feeds_start,3
+25.675, feeds_end,3
+25.825, disappears,1
+26.025,END,0
